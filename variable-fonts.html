@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Proximity — variable font playground</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- UI face (mono) + the default stage font are loaded up front; the rest lazy-load -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,100..900&family=Space+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --paper: #F7F5F1;
+            --ink: #16130F;
+            --muted: rgba(22, 19, 15, .42);
+            --faint: rgba(22, 19, 15, .28);
+            --line: rgba(22, 19, 15, .14);
+            --line-2: rgba(22, 19, 15, .08);
+            --hi: #16130F;
+            --mono: "Space Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            height: 100%
+        }
+
+        body {
+            background: var(--paper);
+            color: var(--ink);
+            font-family: "Fraunces", Georgia, serif;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .mono {
+            font-family: var(--mono)
+        }
+
+        /* ---------- top bar ---------- */
+        .bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 16px;
+            padding: 20px clamp(18px, 5vw, 56px);
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .bar b {
+            color: var(--ink);
+            font-weight: 400
+        }
+
+        .readout {
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap
+        }
+
+        .readout .tag {
+            color: var(--faint)
+        }
+
+        .readout .val {
+            color: var(--ink)
+        }
+
+        /* ---------- stage ---------- */
+        .stage {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(24px, 5vh, 60px);
+            padding: 8px clamp(14px, 5vw, 56px) 0;
+            text-align: center;
+            min-height: 0;
+        }
+
+        .word {
+            font-size: clamp(4.6rem, 25vw, 20rem);
+            line-height: .9;
+            white-space: nowrap;
+            cursor: crosshair;
+        }
+
+        .sub {
+            font-size: clamp(1.4rem, 6vw, 3.6rem);
+            line-height: 1;
+            white-space: nowrap;
+            cursor: crosshair;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: clip;
+        }
+
+        .ch {
+            display: inline-block;
+            will-change: font-variation-settings
+        }
+
+        .ch.space {
+            width: .28em
+        }
+
+        .caption {
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--faint);
+        }
+
+        /* ---------- control deck ---------- */
+        .deck {
+            border-top: 1px solid var(--line);
+            background: var(--paper);
+            padding: 16px clamp(16px, 5vw, 56px) 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: clamp(14px, 3vw, 32px)
+        }
+
+        .grow {
+            flex: 1 1 auto
+        }
+
+        /* eyebrow labels */
+        .ey {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 9px;
+            display: block;
+        }
+
+        /* ---------- font picker (custom listbox) ---------- */
+        .picker {
+            position: relative;
+            min-width: min(320px, 86vw)
+        }
+
+        .picker-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            background: transparent;
+            border: 1px solid var(--line);
+            border-radius: 2px;
+            padding: 11px 14px;
+            cursor: pointer;
+            color: var(--ink);
+            text-align: left;
+        }
+
+        .picker-btn:hover {
+            border-color: var(--faint)
+        }
+
+        .picker-btn:focus-visible {
+            outline: 2px solid var(--ink);
+            outline-offset: 2px
+        }
+
+        .picker-name {
+            font-size: 1.5rem;
+            line-height: 1;
+            font-variation-settings: 'wght' 460;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .picker-cat {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--faint);
+            flex: none
+        }
+
+        .chev {
+            width: 11px;
+            height: 11px;
+            flex: none;
+            transition: transform .25s ease
+        }
+
+        .picker.open .chev {
+            transform: rotate(180deg)
+        }
+
+        .pop {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            z-index: 40;
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: 2px;
+            max-height: min(58vh, 460px);
+            overflow: auto;
+            overscroll-behavior: contain;
+            box-shadow: 0 20px 50px -24px rgba(22, 19, 15, .45), 0 2px 10px -6px rgba(22, 19, 15, .3);
+            opacity: 0;
+            transform: translateY(6px);
+            pointer-events: none;
+            transition: opacity .18s ease, transform .18s ease;
+        }
+
+        .picker.open .pop {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto
+        }
+
+        .grp {
+            padding: 12px 14px 4px;
+            font-family: var(--mono);
+            font-size: 9.5px;
+            letter-spacing: .2em;
+            text-transform: uppercase;
+            color: var(--faint);
+            position: sticky;
+            top: 0;
+            background: var(--paper)
+        }
+
+        .grp::after {
+            content: "";
+            display: block;
+            height: 1px;
+            background: var(--line-2);
+            margin-top: 8px
+        }
+
+        .opt {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 9px 14px;
+            cursor: pointer;
+            border-left: 2px solid transparent;
+        }
+
+        .opt:hover,
+        .opt.cursor {
+            background: rgba(22, 19, 15, .045)
+        }
+
+        .opt[aria-selected="true"] {
+            border-left-color: var(--ink)
+        }
+
+        .opt-name {
+            font-size: 1.55rem;
+            line-height: 1.05;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .opt-ax {
+            font-family: var(--mono);
+            font-size: 9.5px;
+            letter-spacing: .1em;
+            color: var(--faint);
+            flex: none;
+            text-transform: lowercase
+        }
+
+        /* ---------- driven-axis pills ---------- */
+        .pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px
+        }
+
+        .pill {
+            font-family: var(--mono);
+            font-size: 10.5px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            padding: 7px 12px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: transparent;
+            color: var(--muted);
+            cursor: pointer;
+            transition: .15s;
+        }
+
+        .pill:hover {
+            border-color: var(--faint);
+            color: var(--ink)
+        }
+
+        .pill[aria-pressed="true"] {
+            background: var(--ink);
+            color: var(--paper);
+            border-color: var(--ink)
+        }
+
+        .pill:focus-visible {
+            outline: 2px solid var(--ink);
+            outline-offset: 2px
+        }
+
+        /* ---------- sliders ---------- */
+        .sliders {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+            gap: 16px clamp(20px, 3vw, 36px);
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 9px
+        }
+
+        .field .lab {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: .13em;
+            text-transform: uppercase;
+            color: var(--muted);
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .field .lab var {
+            color: var(--ink);
+            font-style: normal;
+            font-variant-numeric: tabular-nums
+        }
+
+        .field.drv .lab {
+            color: var(--ink)
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 2px;
+            background: var(--line);
+            border-radius: 2px;
+            cursor: pointer;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--ink);
+            cursor: grab;
+        }
+
+        input[type=range]::-webkit-slider-thumb:active {
+            cursor: grabbing
+        }
+
+        input[type=range]::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border: none;
+            border-radius: 50%;
+            background: var(--ink);
+            cursor: grab
+        }
+
+        input[type=range]:focus-visible {
+            outline: 2px solid var(--ink);
+            outline-offset: 6px
+        }
+
+        .field.text {
+            min-width: min(280px, 84vw)
+        }
+
+        input[type=text] {
+            width: 100%;
+            font-family: var(--mono);
+            font-size: 12px;
+            letter-spacing: .05em;
+            color: var(--ink);
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--line);
+            padding: 7px 2px;
+            outline: none;
+        }
+
+        input[type=text]:focus {
+            border-color: var(--ink)
+        }
+
+        /* ---------- buttons + export ---------- */
+        .btns {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap
+        }
+
+        .btn {
+            font-family: var(--mono);
+            font-size: 11px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            padding: 11px 16px;
+            border: 1px solid var(--line);
+            border-radius: 2px;
+            background: transparent;
+            color: var(--ink);
+            cursor: pointer;
+            transition: .15s;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            border-color: var(--ink)
+        }
+
+        .btn:focus-visible {
+            outline: 2px solid var(--ink);
+            outline-offset: 2px
+        }
+
+        .btn.primary {
+            background: var(--ink);
+            color: var(--paper);
+            border-color: var(--ink)
+        }
+
+        .btn.primary:hover {
+            opacity: .86
+        }
+
+        .btn.ghost {
+            border-color: transparent;
+            color: var(--muted);
+            padding: 8px 10px
+        }
+
+        .btn.ghost:hover {
+            color: var(--ink);
+            border-color: transparent
+        }
+
+        .btn.ok {
+            border-color: var(--ink)
+        }
+
+        .export {
+            align-items: flex-end
+        }
+
+        /* ---------- export sheet ---------- */
+        .sheet-wrap {
+            position: fixed;
+            inset: 0;
+            z-index: 80;
+            display: grid;
+            place-items: center;
+            padding: clamp(14px, 4vw, 40px);
+            background: rgba(22, 19, 15, .34);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s ease;
+        }
+
+        .sheet-wrap.open {
+            opacity: 1;
+            pointer-events: auto
+        }
+
+        .sheet {
+            width: min(880px, 100%);
+            max-height: 86vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: 3px;
+            box-shadow: 0 40px 90px -30px rgba(22, 19, 15, .6);
+            transform: translateY(10px) scale(.99);
+            transition: transform .22s ease;
+        }
+
+        .sheet-wrap.open .sheet {
+            transform: none
+        }
+
+        .sheet-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 20px 22px 14px
+        }
+
+        .sheet-title {
+            font-size: 12px;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+            color: var(--ink)
+        }
+
+        .sheet-sub {
+            font-size: 10px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--faint);
+            margin-top: 6px
+        }
+
+        .sheet-code {
+            flex: 1;
+            min-height: 200px;
+            margin: 0 22px;
+            padding: 16px;
+            resize: none;
+            font-size: 12px;
+            line-height: 1.65;
+            color: var(--ink);
+            tab-size: 2;
+            background: rgba(22, 19, 15, .035);
+            border: 1px solid var(--line);
+            border-radius: 2px;
+            outline: none;
+            white-space: pre;
+            overflow: auto;
+        }
+
+        .sheet-code:focus {
+            border-color: var(--faint)
+        }
+
+        .sheet-foot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 22px 20px
+        }
+
+        .sheet-note {
+            font-size: 10px;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--faint)
+        }
+
+        @media (max-width:560px) {
+
+            .word,
+            .sub {
+                cursor: pointer
+            }
+
+            .picker-name {
+                font-size: 1.25rem
+            }
+
+            .opt-name {
+                font-size: 1.3rem
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bar">
+        <div><b>proximity</b> — variable font playground</div>
+        <div class="readout mono"><span class="tag" id="axTag">wght</span> <span class="val" id="axVal">300</span></div>
+    </div>
+
+    <main class="stage">
+        <h1 class="word" data-line="hero">work</h1>
+        <div class="sub" data-line="sub">the quick brown fox</div>
+        <p class="caption">move your cursor across the letters</p>
+    </main>
+
+    <div class="deck">
+        <div class="row">
+            <div class="grow" style="max-width:420px">
+                <span class="ey">typeface</span>
+                <div class="picker" id="picker">
+                    <button class="picker-btn" id="pickerBtn" aria-haspopup="listbox" aria-expanded="false">
+                        <span class="picker-name" id="pickerName">Fraunces</span>
+                        <span class="picker-cat" id="pickerCat">Serif</span>
+                        <svg class="chev" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4">
+                            <path d="M2 4.5 6 8.5 10 4.5" />
+                        </svg>
+                    </button>
+                    <div class="pop" id="pop" role="listbox" aria-label="Choose a typeface"></div>
+                </div>
+            </div>
+            <div>
+                <span class="ey">proximity drives</span>
+                <div class="pills" id="pills"></div>
+            </div>
+            <div>
+                <span class="ey">spread</span>
+                <div class="pills" id="spreadPills"></div>
+            </div>
+        </div>
+
+        <div class="sliders" id="sliders"></div>
+
+        <div class="row">
+            <div class="field text grow">
+                <span class="ey">main text</span>
+                <input id="heroInput" type="text" value="work" maxlength="18" spellcheck="false" autocomplete="off">
+            </div>
+            <div class="field text grow">
+                <span class="ey">small text</span>
+                <input id="textInput" type="text" value="the quick brown fox" maxlength="44" spellcheck="false"
+                    autocomplete="off">
+            </div>
+        </div>
+
+        <div class="row export">
+            <div>
+                <span class="ey">export as</span>
+                <div class="pills" id="techPills"></div>
+            </div>
+            <div class="grow"></div>
+            <div class="btns">
+                <button class="btn" id="copyPrompt">Copy prompt</button>
+                <button class="btn primary" id="copyCode">Copy code</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- export sheet -->
+    <div class="sheet-wrap" id="sheetWrap" aria-hidden="true">
+        <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+            <div class="sheet-head">
+                <div>
+                    <div class="sheet-title mono" id="sheetTitle">Prompt</div>
+                    <div class="sheet-sub mono" id="sheetSub">paste this into any AI to recreate the effect</div>
+                </div>
+                <button class="btn ghost" id="sheetClose" aria-label="Close">Close</button>
+            </div>
+            <textarea class="sheet-code mono" id="sheetCode" readonly spellcheck="false"></textarea>
+            <div class="sheet-foot">
+                <span class="sheet-note mono" id="sheetNote"></span>
+                <button class="btn primary" id="sheetCopy">Copy to clipboard</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (() => {
+            "use strict";
+
+            /* =====================================================================
+               FONT REGISTRY
+               Add a font by dropping one object in here — the whole UI adapts.
+                 google : the Google Fonts css2 fragment (axes sorted UPPER then lower)
+                 axes   : { TAG: {min,max,def,label,[step]} }
+                 drive  : which axis proximity moves by default
+                 rest   / peak : optional overrides for the driven axis endpoints
+                 couple : axes that track the driven value while it's the drive axis
+                          { axis, from:[srcLo,srcHi], to:[dstLo,dstHi] }
+            ===================================================================== */
+            const FONTS = [
+                // ---- Serif ----
+                {
+                    id: 'fraunces', name: 'Fraunces', cat: 'Serif', family: 'Fraunces', fallback: 'Georgia,serif',
+                    google: 'Fraunces:SOFT,WONK,opsz,wght@0..100,0..1,9..144,100..900',
+                    axes: {
+                        wght: { min: 100, max: 900, def: 300, label: 'Weight' }, opsz: { min: 9, max: 144, def: 72, label: 'Optical size' },
+                        SOFT: { min: 0, max: 100, def: 0, label: 'Softness' }, WONK: { min: 0, max: 1, def: 0, label: 'Wonk', step: 1 }
+                    },
+                    drive: 'wght', rest: 300, peak: 880, couple: [{ axis: 'opsz', from: [100, 900], to: [72, 144] }]
+                },
+
+                {
+                    id: 'bodoni', name: 'Bodoni Moda', cat: 'Serif', family: 'Bodoni Moda', fallback: '"Didot",Georgia,serif',
+                    google: 'Bodoni+Moda:opsz,wght@6..96,400..900',
+                    axes: { wght: { min: 400, max: 900, def: 400, label: 'Weight' }, opsz: { min: 6, max: 96, def: 16, label: 'Optical size' } },
+                    drive: 'wght', rest: 400, peak: 900, couple: [{ axis: 'opsz', from: [400, 900], to: [11, 96] }]
+                },
+
+                {
+                    id: 'playfair', name: 'Playfair Display', cat: 'Serif', family: 'Playfair Display', fallback: 'Georgia,serif',
+                    google: 'Playfair+Display:wght@400..900',
+                    axes: { wght: { min: 400, max: 900, def: 400, label: 'Weight' } }, drive: 'wght'
+                },
+
+                {
+                    id: 'newsreader', name: 'Newsreader', cat: 'Serif', family: 'Newsreader', fallback: 'Georgia,serif',
+                    google: 'Newsreader:opsz,wght@6..72,200..800',
+                    axes: { wght: { min: 200, max: 800, def: 300, label: 'Weight' }, opsz: { min: 6, max: 72, def: 36, label: 'Optical size' } },
+                    drive: 'wght', rest: 280, peak: 780, couple: [{ axis: 'opsz', from: [200, 800], to: [10, 72] }]
+                },
+
+                {
+                    id: 'literata', name: 'Literata', cat: 'Serif', family: 'Literata', fallback: 'Georgia,serif',
+                    google: 'Literata:opsz,wght@7..72,200..900',
+                    axes: { wght: { min: 200, max: 900, def: 300, label: 'Weight' }, opsz: { min: 7, max: 72, def: 36, label: 'Optical size' } },
+                    drive: 'wght', rest: 300, peak: 850, couple: [{ axis: 'opsz', from: [200, 900], to: [10, 72] }]
+                },
+
+                {
+                    id: 'sourceserif', name: 'Source Serif 4', cat: 'Serif', family: 'Source Serif 4', fallback: 'Georgia,serif',
+                    google: 'Source+Serif+4:opsz,wght@8..60,200..900',
+                    axes: { wght: { min: 200, max: 900, def: 300, label: 'Weight' }, opsz: { min: 8, max: 60, def: 20, label: 'Optical size' } },
+                    drive: 'wght', rest: 300, peak: 860, couple: [{ axis: 'opsz', from: [200, 900], to: [10, 60] }]
+                },
+
+                {
+                    id: 'crimson', name: 'Crimson Pro', cat: 'Serif', family: 'Crimson Pro', fallback: 'Georgia,serif',
+                    google: 'Crimson+Pro:wght@200..900',
+                    axes: { wght: { min: 200, max: 900, def: 300, label: 'Weight' } }, drive: 'wght', rest: 300, peak: 860
+                },
+
+                // ---- Sans ----
+                {
+                    id: 'inter', name: 'Inter', cat: 'Sans', family: 'Inter', fallback: 'system-ui,sans-serif',
+                    google: 'Inter:opsz,wght@14..32,100..900',
+                    axes: { wght: { min: 100, max: 900, def: 300, label: 'Weight' }, opsz: { min: 14, max: 32, def: 20, label: 'Optical size' } },
+                    drive: 'wght', rest: 300, peak: 860, couple: [{ axis: 'opsz', from: [100, 900], to: [14, 32] }]
+                },
+
+                {
+                    id: 'dmsans', name: 'DM Sans', cat: 'Sans', family: 'DM Sans', fallback: 'system-ui,sans-serif',
+                    google: 'DM+Sans:opsz,wght@9..40,100..1000',
+                    axes: { wght: { min: 100, max: 1000, def: 300, label: 'Weight' }, opsz: { min: 9, max: 40, def: 18, label: 'Optical size' } },
+                    drive: 'wght', rest: 300, peak: 950, couple: [{ axis: 'opsz', from: [100, 1000], to: [9, 40] }]
+                },
+
+                {
+                    id: 'worksans', name: 'Work Sans', cat: 'Sans', family: 'Work Sans', fallback: 'system-ui,sans-serif',
+                    google: 'Work+Sans:wght@100..900',
+                    axes: { wght: { min: 100, max: 900, def: 300, label: 'Weight' } }, drive: 'wght', rest: 300, peak: 860
+                },
+
+                {
+                    id: 'spacegro', name: 'Space Grotesk', cat: 'Sans', family: 'Space Grotesk', fallback: 'system-ui,sans-serif',
+                    google: 'Space+Grotesk:wght@300..700',
+                    axes: { wght: { min: 300, max: 700, def: 300, label: 'Weight' } }, drive: 'wght', rest: 300, peak: 700
+                },
+
+                {
+                    id: 'bricolage', name: 'Bricolage Grotesque', cat: 'Sans', family: 'Bricolage Grotesque', fallback: 'system-ui,sans-serif',
+                    google: 'Bricolage+Grotesque:opsz,wght@12..96,200..800',
+                    axes: { wght: { min: 200, max: 800, def: 300, label: 'Weight' }, opsz: { min: 12, max: 96, def: 36, label: 'Optical size' } },
+                    drive: 'wght', rest: 300, peak: 780, couple: [{ axis: 'opsz', from: [200, 800], to: [14, 96] }]
+                },
+
+                {
+                    id: 'archivo', name: 'Archivo', cat: 'Sans', family: 'Archivo', fallback: 'system-ui,sans-serif',
+                    google: 'Archivo:wdth,wght@62..125,100..900',
+                    axes: { wght: { min: 100, max: 900, def: 400, label: 'Weight' }, wdth: { min: 62, max: 125, def: 100, label: 'Width' } },
+                    drive: 'wght', rest: 300, peak: 880
+                },
+
+                {
+                    id: 'anybody', name: 'Anybody', cat: 'Sans', family: 'Anybody', fallback: 'system-ui,sans-serif',
+                    google: 'Anybody:wdth,wght@50..150,100..900',
+                    axes: { wght: { min: 100, max: 900, def: 500, label: 'Weight' }, wdth: { min: 50, max: 150, def: 100, label: 'Width' } },
+                    drive: 'wdth', rest: 78, peak: 150
+                },   // width-driven: letters flex wide near the cursor
+
+                // ---- Mono ----
+                {
+                    id: 'jetbrains', name: 'JetBrains Mono', cat: 'Mono', family: 'JetBrains Mono', fallback: 'ui-monospace,monospace',
+                    google: 'JetBrains+Mono:wght@100..800',
+                    axes: { wght: { min: 100, max: 800, def: 300, label: 'Weight' } }, drive: 'wght', rest: 300, peak: 800
+                },
+
+                {
+                    id: 'recursive', name: 'Recursive', cat: 'Mono', family: 'Recursive', fallback: 'ui-monospace,monospace',
+                    google: 'Recursive:CASL,CRSV,MONO,slnt,wght@0..1,0..1,0..1,-15..0,300..1000',
+                    axes: {
+                        wght: { min: 300, max: 1000, def: 400, label: 'Weight' }, CASL: { min: 0, max: 1, def: 0, label: 'Casual' },
+                        MONO: { min: 0, max: 1, def: 1, label: 'Mono→Sans' }, slnt: { min: -15, max: 0, def: 0, label: 'Slant' },
+                        CRSV: { min: 0, max: 1, def: 0, label: 'Cursive', step: 1 }
+                    },
+                    drive: 'wght', rest: 360, peak: 980
+                },
+
+                // ---- Expressive ----
+                {
+                    id: 'robotoflex', name: 'Roboto Flex', cat: 'Expressive', family: 'Roboto Flex', fallback: 'system-ui,sans-serif',
+                    google: 'Roboto+Flex:GRAD,opsz,slnt,wdth,wght@-200..150,8..144,-10..0,25..151,100..1000',
+                    axes: {
+                        wght: { min: 100, max: 1000, def: 400, label: 'Weight' }, wdth: { min: 25, max: 151, def: 100, label: 'Width' },
+                        opsz: { min: 8, max: 144, def: 40, label: 'Optical size' }, GRAD: { min: -200, max: 150, def: 0, label: 'Grade' },
+                        slnt: { min: -10, max: 0, def: 0, label: 'Slant' }
+                    },
+                    drive: 'wght', rest: 340, peak: 980, couple: [{ axis: 'opsz', from: [100, 1000], to: [12, 144] }]
+                },
+
+                {
+                    id: 'handjet', name: 'Handjet', cat: 'Expressive', family: 'Handjet', fallback: 'ui-monospace,monospace',
+                    google: 'Handjet:ELGR,ELSH,wdth,wght@1..100,0..16,75..100,100..900',
+                    axes: {
+                        ELGR: { min: 1, max: 100, def: 1, label: 'Grid' }, ELSH: { min: 0, max: 16, def: 0, label: 'Element shape' },
+                        wght: { min: 100, max: 900, def: 500, label: 'Weight' }, wdth: { min: 75, max: 100, def: 100, label: 'Width' }
+                    },
+                    drive: 'ELGR', rest: 1, peak: 100
+                },       // pixel grid fills in near the cursor
+
+                {
+                    id: 'kablammo', name: 'Kablammo', cat: 'Expressive', family: 'Kablammo', fallback: 'system-ui,sans-serif',
+                    google: 'Kablammo:MORF@0..60',
+                    axes: { MORF: { min: 0, max: 60, def: 0, label: 'Morph' } }, drive: 'MORF', rest: 0, peak: 60
+                },
+
+                {
+                    id: 'nabla', name: 'Nabla', cat: 'Expressive', family: 'Nabla', fallback: 'system-ui,sans-serif',
+                    google: 'Nabla:EDPT,EHLT@0..200,0..24',
+                    axes: { EDPT: { min: 0, max: 200, def: 0, label: 'Depth' }, EHLT: { min: 0, max: 24, def: 12, label: 'Highlight' } },
+                    drive: 'EDPT', rest: 0, peak: 200
+                },
+            ];
+
+            /* ---------- helpers ---------- */
+            const $ = s => document.querySelector(s);
+            const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+            const lerp = (a, b, t) => a + (b - a) * t;
+            const mapRange = (x, a, b, c, d) => lerp(c, d, clamp((x - a) / ((b - a) || 1), 0, 1));
+            const stepFor = ax => ax.step ?? ((ax.max - ax.min) <= 2 ? 0.01 : (ax.max - ax.min) <= 30 ? 0.5 : 1);
+            const fmt = (v, ax) => (ax.max - ax.min) <= 2 ? v.toFixed(2) : Math.round(v);
+
+            /* ---------- lazy font loading ---------- */
+            const loaded = new Set();
+            function loadFont(f) {
+                if (loaded.has(f.id)) return;
+                loaded.add(f.id);
+                const l = document.createElement('link');
+                l.rel = 'stylesheet';
+                l.href = `https://fonts.googleapis.com/css2?family=${f.google}&display=swap`;
+                document.head.appendChild(l);
+            }
+            let allLoaded = false;
+            const loadAll = () => { if (allLoaded) return; allLoaded = true; FONTS.forEach(loadFont); };
+
+            /* =====================================================================
+               ENGINE STATE
+            ===================================================================== */
+            const cfg = {
+                reduce: matchMedia('(prefers-reduced-motion: reduce)').matches,
+                smooth: 0.18,       // trailing lerp
+                radius: 220,
+            };
+            const S = {
+                font: FONTS[0],
+                driven: FONTS[0].drive,
+                rest: 300, peak: 880,
+                stat: {},           // static axis values {tag:value}
+                couples: [],        // active couplings for current driven axis
+                letters: [],        // {el, vals:{tag:currentValue}}
+                spread: 'both',     // 'both' | 'left' | 'right' — which side of the cursor reacts
+                tech: 'html',       // export target
+            };
+            const pointer = { x: -9999, y: -9999, active: false };
+
+            const stageEls = [...document.querySelectorAll('[data-line]')];
+            const axTag = $('#axTag'), axVal = $('#axVal');
+
+            /* ---------- text splitting ---------- */
+            function split(el) {
+                const text = el.dataset.text ?? el.textContent;
+                el.dataset.text = text;
+                el.textContent = '';
+                for (const chr of text) {
+                    const s = document.createElement('span');
+                    s.className = 'ch';
+                    if (chr === ' ') { s.classList.add('space'); s.innerHTML = '&nbsp;'; }
+                    else s.textContent = chr;
+                    el.appendChild(s);
+                }
+            }
+            function collect() {
+                S.letters = [...document.querySelectorAll('.ch')].map(el => {
+                    const vals = {};
+                    for (const tag in S.font.axes) vals[tag] = axisStart(tag);
+                    return { el, vals };
+                });
+            }
+            // where each axis sits at rest (used as the animation starting point)
+            function axisStart(tag) {
+                if (tag === S.driven) return S.rest;
+                const c = S.couples.find(c => c.axis === tag);
+                if (c) return mapRange(S.rest, c.from[0], c.from[1], c.to[0], c.to[1]);
+                return S.stat[tag];
+            }
+
+            /* =====================================================================
+               SELECTING A FONT
+            ===================================================================== */
+            function selectFont(id, { focusStage = false } = {}) {
+                const f = FONTS.find(x => x.id === id) || FONTS[0];
+                S.font = f;
+                loadFont(f);
+
+                // apply family to the live stage
+                stageEls.forEach(el => el.style.fontFamily = `"${f.family}",${f.fallback}`);
+
+                // reset driven axis + endpoints + static values
+                setDriven(f.drive, /*isInitial*/ true);
+
+                // picker button label
+                $('#pickerName').textContent = f.name;
+                $('#pickerName').style.fontFamily = `"${f.family}",${f.fallback}`;
+                $('#pickerCat').textContent = f.cat;
+                // reflect selection in the list
+                [...document.querySelectorAll('.opt')].forEach(o =>
+                    o.setAttribute('aria-selected', o.dataset.id === f.id ? 'true' : 'false'));
+            }
+
+            /* choose which axis proximity drives */
+            function setDriven(tag, isInitial) {
+                const f = S.font, ax = f.axes[tag];
+                S.driven = tag;
+
+                // endpoints: honour registry overrides only for the font's native drive axis
+                if (isInitial && tag === f.drive) {
+                    S.rest = f.rest ?? ax.def ?? ax.min;
+                    S.peak = f.peak ?? ax.max;
+                } else {
+                    S.rest = ax.def ?? ax.min;
+                    S.peak = ax.max;
+                }
+                // couplings apply only while the native drive axis is the one being driven
+                S.couples = (tag === f.drive && f.couple) ? f.couple.filter(c => f.axes[c.axis]) : [];
+
+                // static values: every axis that isn't driven or coupled, seeded to its default
+                S.stat = {};
+                const coupled = new Set(S.couples.map(c => c.axis));
+                for (const t in f.axes) {
+                    if (t === tag || coupled.has(t)) continue;
+                    S.stat[t] = f.axes[t].def ?? f.axes[t].min;
+                }
+
+                buildPills();
+                buildSliders();
+                axTag.textContent = tag;
+            }
+
+            /* =====================================================================
+               UI BUILDERS
+            ===================================================================== */
+            function buildPills() {
+                const box = $('#pills'); box.innerHTML = '';
+                const keys = Object.keys(S.font.axes);
+                if (keys.length <= 1) { box.innerHTML = '<span class="pill" aria-pressed="true" style="cursor:default">' + keys[0] + '</span>'; return; }
+                for (const tag of keys) {
+                    const b = document.createElement('button');
+                    b.className = 'pill'; b.type = 'button';
+                    b.textContent = tag;
+                    b.setAttribute('aria-pressed', tag === S.driven ? 'true' : 'false');
+                    b.title = 'proximity drives ' + (S.font.axes[tag].label || tag);
+                    b.onclick = () => setDriven(tag, false);
+                    box.appendChild(b);
+                }
+            }
+
+            function sliderField({ tag, label, min, max, value, step, driven = false, kind }) {
+                const wrap = document.createElement('div');
+                wrap.className = 'field' + (driven ? ' drv' : '');
+                const ax = S.font.axes[tag];
+                const lab = document.createElement('div'); lab.className = 'lab';
+                const name = document.createElement('span'); name.textContent = label;
+                const out = document.createElement('var'); out.textContent = fmt(value, ax);
+                lab.append(name, out);
+                const inp = document.createElement('input');
+                inp.type = 'range'; inp.min = min; inp.max = max; inp.step = step; inp.value = value;
+                inp.oninput = () => {
+                    const v = +inp.value;
+                    out.textContent = fmt(v, ax);
+                    if (kind === 'rest') S.rest = v;
+                    else if (kind === 'peak') S.peak = v;
+                    else S.stat[tag] = v;
+                };
+                wrap.append(lab, inp);
+                return wrap;
+            }
+
+            function globalField({ label, min, max, value, step, onInput, digits = 0 }) {
+                const wrap = document.createElement('div'); wrap.className = 'field';
+                const lab = document.createElement('div'); lab.className = 'lab';
+                const name = document.createElement('span'); name.textContent = label;
+                const out = document.createElement('var'); out.textContent = value.toFixed(digits);
+                lab.append(name, out);
+                const inp = document.createElement('input');
+                inp.type = 'range'; inp.min = min; inp.max = max; inp.step = step; inp.value = value;
+                inp.oninput = () => { const v = +inp.value; out.textContent = v.toFixed(digits); onInput(v); };
+                wrap.append(lab, inp);
+                return wrap;
+            }
+
+            function buildSliders() {
+                const grid = $('#sliders'); grid.innerHTML = '';
+                const ax = S.font.axes[S.driven];
+                const st = stepFor(ax);
+                const dl = ax.label || S.driven;
+
+                // driven endpoints
+                grid.appendChild(sliderField({ tag: S.driven, label: `${dl} · rest`, min: ax.min, max: ax.max, value: S.rest, step: st, driven: true, kind: 'rest' }));
+                grid.appendChild(sliderField({ tag: S.driven, label: `${dl} · peak`, min: ax.min, max: ax.max, value: S.peak, step: st, driven: true, kind: 'peak' }));
+
+                // static axes
+                const coupled = new Set(S.couples.map(c => c.axis));
+                for (const tag in S.font.axes) {
+                    if (tag === S.driven || coupled.has(tag)) continue;
+                    const a = S.font.axes[tag];
+                    grid.appendChild(sliderField({ tag, label: a.label || tag, min: a.min, max: a.max, value: S.stat[tag], step: stepFor(a) }));
+                }
+
+                // global feel controls
+                grid.appendChild(globalField({
+                    label: 'influence radius', min: 80, max: 460, value: cfg.radius, step: 1,
+                    onInput: v => cfg.radius = v
+                }));
+                grid.appendChild(globalField({
+                    label: 'smoothing', min: 0.04, max: 0.6, value: cfg.smooth, step: 0.01, digits: 2,
+                    onInput: v => cfg.smooth = v
+                }));
+
+                collect();  // reseed letters to the new axis layout
+            }
+
+            /* =====================================================================
+               PICKER (custom listbox)
+            ===================================================================== */
+            function buildPicker() {
+                const pop = $('#pop');
+                const cats = [...new Set(FONTS.map(f => f.cat))];
+                for (const cat of cats) {
+                    const h = document.createElement('div'); h.className = 'grp'; h.textContent = cat; pop.appendChild(h);
+                    for (const f of FONTS.filter(x => x.cat === cat)) {
+                        const o = document.createElement('div');
+                        o.className = 'opt'; o.dataset.id = f.id; o.setAttribute('role', 'option');
+                        o.setAttribute('aria-selected', f.id === S.font.id ? 'true' : 'false');
+                        const nm = document.createElement('span');
+                        nm.className = 'opt-name'; nm.textContent = f.name;
+                        nm.style.fontFamily = `"${f.family}",${f.fallback}`;
+                        const ax = document.createElement('span');
+                        ax.className = 'opt-ax'; ax.textContent = Object.keys(f.axes).join(' · ');
+                        o.append(nm, ax);
+                        o.onclick = () => { selectFont(f.id); closePicker(); };
+                        pop.appendChild(o);
+                    }
+                }
+            }
+
+            const picker = $('#picker'), pickerBtn = $('#pickerBtn');
+            let pickerOpen = false, cursorIdx = -1;
+            const optionEls = () => [...document.querySelectorAll('.opt')];
+
+            function openPicker() {
+                pickerOpen = true; loadAll();
+                picker.classList.add('open'); pickerBtn.setAttribute('aria-expanded', 'true');
+                const opts = optionEls();
+                cursorIdx = Math.max(0, opts.findIndex(o => o.dataset.id === S.font.id));
+                moveCursor(0);
+                const sel = opts[cursorIdx]; if (sel) sel.scrollIntoView({ block: 'nearest' });
+            }
+            function closePicker() {
+                pickerOpen = false;
+                picker.classList.remove('open'); pickerBtn.setAttribute('aria-expanded', 'false');
+                optionEls().forEach(o => o.classList.remove('cursor'));
+            }
+            function moveCursor(d) {
+                const opts = optionEls(); if (!opts.length) return;
+                cursorIdx = (cursorIdx + d + opts.length) % opts.length;
+                opts.forEach((o, i) => o.classList.toggle('cursor', i === cursorIdx));
+                opts[cursorIdx].scrollIntoView({ block: 'nearest' });
+            }
+            pickerBtn.onclick = () => pickerOpen ? closePicker() : openPicker();
+            pickerBtn.addEventListener('keydown', e => {
+                if ((e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') && !pickerOpen) { e.preventDefault(); openPicker(); }
+            });
+            document.addEventListener('keydown', e => {
+                if (!pickerOpen) return;
+                if (e.key === 'Escape') { closePicker(); pickerBtn.focus(); }
+                else if (e.key === 'ArrowDown') { e.preventDefault(); moveCursor(1); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); moveCursor(-1); }
+                else if (e.key === 'Enter') { e.preventDefault(); const o = optionEls()[cursorIdx]; if (o) { selectFont(o.dataset.id); closePicker(); pickerBtn.focus(); } }
+            });
+            document.addEventListener('pointerdown', e => { if (pickerOpen && !picker.contains(e.target)) closePicker(); });
+
+            /* =====================================================================
+               POINTER + ANIMATION
+            ===================================================================== */
+            addEventListener('pointermove', e => { pointer.x = e.clientX; pointer.y = e.clientY; pointer.active = true; }, { passive: true });
+            addEventListener('pointerleave', () => pointer.active = false);
+            document.addEventListener('mouseleave', () => pointer.active = false);
+
+            function tick() {
+                const R = cfg.radius, smooth = cfg.reduce ? 1 : cfg.smooth;
+                let peakSeen = S.rest;
+
+                for (const L of S.letters) {
+                    const r = L.el.getBoundingClientRect();
+                    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+
+                    let t = 0;
+                    if (pointer.active) {
+                        const side = cx - pointer.x;     // >0 → letter sits right of the cursor
+                        const ok = S.spread === 'both'
+                            || (S.spread === 'right' && side >= 0)
+                            || (S.spread === 'left' && side <= 0);
+                        if (ok) {
+                            const d = Math.hypot(pointer.x - cx, pointer.y - cy);
+                            t = clamp(1 - d / R, 0, 1);
+                            t = t * t * (3 - 2 * t);               // smoothstep falloff
+                        }
+                    }
+
+                    // target for every axis of the current font
+                    const target = {};
+                    const driveVal = lerp(S.rest, S.peak, t);
+                    target[S.driven] = driveVal;
+                    for (const c of S.couples) target[c.axis] = mapRange(driveVal, c.from[0], c.from[1], c.to[0], c.to[1]);
+                    for (const tag in S.stat) target[tag] = S.stat[tag];
+
+                    // ease toward target + compose the settings string
+                    let str = '';
+                    for (const tag in S.font.axes) {
+                        const cur = L.vals[tag] + (target[tag] - L.vals[tag]) * smooth;
+                        L.vals[tag] = cur;
+                        str += `'${tag}' ${cur.toFixed(2)},`;
+                    }
+                    L.el.style.fontVariationSettings = str.slice(0, -1);
+
+                    if (L.vals[S.driven] > peakSeen) peakSeen = L.vals[S.driven];
+                }
+
+                const ax = S.font.axes[S.driven];
+                axVal.textContent = fmt(peakSeen, ax);
+                requestAnimationFrame(tick);
+            }
+
+            /* =====================================================================
+               BOOT
+            ===================================================================== */
+            function bindLine(inputSel, lineSel, fallback) {
+                const input = $(inputSel), line = document.querySelector(lineSel);
+                input.addEventListener('input', () => {
+                    line.dataset.text = input.value || fallback;
+                    split(line);
+                    collect();
+                });
+            }
+            bindLine('#textInput', '.sub', ' ');
+            bindLine('#heroInput', '.word', ' ');
+
+            /* ---------- spread pills ---------- */
+            function buildSpreadPills() {
+                const box = $('#spreadPills'); box.innerHTML = '';
+                const opts = [
+                    ['both', 'both', 'both sides of the cursor react'],
+                    ['left', 'left', 'only letters left of the cursor react'],
+                    ['right', 'right', 'only letters right of the cursor react'],
+                ];
+                for (const [val, label, tip] of opts) {
+                    const b = document.createElement('button');
+                    b.className = 'pill'; b.type = 'button'; b.textContent = label; b.title = tip;
+                    b.setAttribute('aria-pressed', val === S.spread ? 'true' : 'false');
+                    b.onclick = () => {
+                        S.spread = val;
+                        [...box.children].forEach(c => c.setAttribute('aria-pressed', c === b ? 'true' : 'false'));
+                    };
+                    box.appendChild(b);
+                }
+            }
+            buildSpreadPills();
+
+            /* ---------- export target pills ---------- */
+            function buildTechPills() {
+                const box = $('#techPills'); box.innerHTML = '';
+                const opts = [['html', 'HTML / CSS / JS'], ['react', 'React']];
+                for (const [val, label] of opts) {
+                    const b = document.createElement('button');
+                    b.className = 'pill'; b.type = 'button'; b.textContent = label;
+                    b.setAttribute('aria-pressed', val === S.tech ? 'true' : 'false');
+                    b.onclick = () => {
+                        S.tech = val;
+                        [...box.children].forEach(c => c.setAttribute('aria-pressed', c === b ? 'true' : 'false'));
+                    };
+                    box.appendChild(b);
+                }
+            }
+            buildTechPills();
+
+            /* =====================================================================
+               EXPORT — snapshot current config, then generate prompt / code
+            ===================================================================== */
+            function snapshot() {
+                const f = S.font;
+                return {
+                    name: f.name, family: f.family, fallback: f.fallback, google: f.google,
+                    axes: Object.keys(f.axes),
+                    driven: S.driven, rest: round2(S.rest), peak: round2(S.peak),
+                    radius: Math.round(cfg.radius), smooth: round2(cfg.smooth), spread: S.spread,
+                    couples: S.couples.map(c => ({ axis: c.axis, from: c.from.slice(), to: c.to.slice() })),
+                    statics: { ...S.stat },
+                    hero: document.querySelector('.word').dataset.text,
+                    sub: document.querySelector('.sub').dataset.text,
+                };
+            }
+            const round2 = v => Math.round(v * 100) / 100;
+            const spreadWord = s => s === 'both' ? 'both sides of the cursor'
+                : s === 'left' ? 'only letters to the left of the cursor'
+                    : 'only letters to the right of the cursor';
+
+            function genPrompt(s) {
+                const L = [];
+                L.push(`Build a "proximity" variable-font effect for a webpage.`);
+                L.push(``);
+                L.push(`FONT: ${s.name} (Google Fonts). Load every axis it uses: ${s.axes.join(', ')}.`);
+                L.push(`Google Fonts href: https://fonts.googleapis.com/css2?family=${s.google}&display=swap`);
+                L.push(``);
+                L.push(`EFFECT: Split each line of text into per-letter <span>s. On pointer move, ease every letter toward a target based on how close the cursor is (radial distance, smoothstep falloff), lerping the current value toward the target by ${s.smooth} each frame for a trailing feel. Respect prefers-reduced-motion (snap instantly).`);
+                L.push(``);
+                L.push(`DRIVEN AXIS: '${s.driven}' goes from ${s.rest} at rest to ${s.peak} at the cursor.`);
+                L.push(`INFLUENCE RADIUS: ${s.radius}px.`);
+                L.push(`SPREAD: ${spreadWord(s.spread)} react.`);
+                if (s.couples.length) {
+                    s.couples.forEach(c => L.push(`COUPLED: '${c.axis}' tracks '${s.driven}', mapping ${c.from[0]}→${c.from[1]} onto ${c.to[0]}→${c.to[1]}.`));
+                }
+                const st = Object.entries(s.statics);
+                if (st.length) L.push(`FIXED AXES: ${st.map(([k, v]) => `'${k}' ${round2(v)}`).join(', ')}.`);
+                L.push(``);
+                L.push(`TEXT: main line "${s.hero}", small line "${s.sub}".`);
+                L.push(`LAYOUT: centered, responsive with clamp() font sizes, no external libraries.`);
+                return L.join('\n');
+            }
+
+            // shared config literal used by both code targets
+            function cfgLiteral(s) {
+                return `const CFG = {
+  family: ${JSON.stringify(s.family)},
+  fallback: ${JSON.stringify(s.fallback)},
+  axes: ${JSON.stringify(s.axes)},
+  driven: ${JSON.stringify(s.driven)},
+  rest: ${s.rest}, peak: ${s.peak},
+  radius: ${s.radius}, smooth: ${s.smooth},
+  spread: ${JSON.stringify(s.spread)},           // 'both' | 'left' | 'right'
+  couples: ${JSON.stringify(s.couples)},
+  statics: ${JSON.stringify(s.statics)}
+};`;
+            }
+
+            // the engine body, shared verbatim (operates on elements with class .vf-line)
+            const ENGINE = `  const clamp=(v,a,b)=>v<a?a:v>b?b:v, lerp=(a,b,t)=>a+(b-a)*t;
+  const map=(x,a,b,c,d)=>lerp(c,d,clamp((x-a)/((b-a)||1),0,1));
+  const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const P={x:-1e5,y:-1e5,on:false};
+  const onMove=e=>{P.x=e.clientX;P.y=e.clientY;P.on=true};
+  const onLeave=()=>{P.on=false;};
+  addEventListener('pointermove',onMove,{passive:true});
+  addEventListener('pointerleave',onLeave);
+
+  const start=a=>{
+    if(a===CFG.driven) return CFG.rest;
+    const c=CFG.couples.find(c=>c.axis===a);
+    return c ? map(CFG.rest,c.from[0],c.from[1],c.to[0],c.to[1]) : CFG.statics[a];
+  };
+  const letters=[];
+  root.querySelectorAll('.vf-line').forEach(line=>{
+    const txt=line.dataset.text ?? line.textContent; line.textContent='';
+    for(const ch of txt){
+      const s=document.createElement('span'); s.className='vf-ch'; s.style.display='inline-block';
+      if(ch===' '){ s.style.width='.28em'; s.innerHTML='&nbsp;'; } else s.textContent=ch;
+      line.appendChild(s);
+      const vals={}; CFG.axes.forEach(a=>vals[a]=start(a));
+      letters.push({el:s,vals});
+    }
+  });
+
+  let raf;
+  function frame(){
+    const R=CFG.radius, sm=reduce?1:CFG.smooth;
+    for(const L of letters){
+      const r=L.el.getBoundingClientRect();
+      const cx=r.left+r.width/2, cy=r.top+r.height/2;
+      let t=0;
+      if(P.on){
+        const side=cx-P.x;
+        const ok = CFG.spread==='both' || (CFG.spread==='right'&&side>=0) || (CFG.spread==='left'&&side<=0);
+        if(ok){ const d=Math.hypot(P.x-cx,P.y-cy); t=clamp(1-d/R,0,1); t=t*t*(3-2*t); }
+      }
+      const dv=lerp(CFG.rest,CFG.peak,t), tgt={};
+      tgt[CFG.driven]=dv;
+      CFG.couples.forEach(c=>tgt[c.axis]=map(dv,c.from[0],c.from[1],c.to[0],c.to[1]));
+      for(const a in CFG.statics) tgt[a]=CFG.statics[a];
+      let str='';
+      for(const a of CFG.axes){ const v=L.vals[a]+(tgt[a]-L.vals[a])*sm; L.vals[a]=v; str+=\`'\${a}' \${v.toFixed(2)},\`; }
+      L.el.style.fontVariationSettings=str.slice(0,-1);
+    }
+    raf=requestAnimationFrame(frame);
+  }
+  raf=requestAnimationFrame(frame);`;
+
+            function genHTML(s) {
+                return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=${s.google}&display=swap" rel="stylesheet">
+<style>
+  :root{ --paper:#F7F5F1; --ink:#16130F; }
+  *{ margin:0; box-sizing:border-box; }
+  body{
+    min-height:100dvh; display:grid; place-content:center; gap:.5em;
+    background:var(--paper); color:var(--ink); text-align:center;
+    padding:8vw; overflow-x:hidden;
+    font-family:${JSON.stringify(s.family)}, ${s.fallback};
+  }
+  .vf-line{ line-height:.95; white-space:nowrap; cursor:crosshair; }
+  .vf-line.hero{ font-size:clamp(3rem, 18vw, 14rem); }
+  .vf-line.small{ font-size:clamp(1.2rem, 5vw, 2.6rem); }
+  .vf-ch{ display:inline-block; will-change:font-variation-settings; }
+  .vf-ch.sp{ width:.28em; }
+</style>
+</head>
+<body>
+  <h1 class="vf-line hero"  data-text="${escAttr(s.hero)}"></h1>
+  <p  class="vf-line small" data-text="${escAttr(s.sub)}"></p>
+
+<script>
+${cfgLiteral(s)}
+
+(function(){
+  const root = document;
+${ENGINE}
+})();
+<\/script>
+</body>
+</html>`;
+            }
+
+            function genReact(s) {
+                return `import { useEffect, useRef } from "react";
+
+// 1) Add this once to your <head> (or index.html):
+//    <link href="https://fonts.googleapis.com/css2?family=${s.google}&display=swap" rel="stylesheet" />
+
+${cfgLiteral(s)}
+
+export default function ProximityText({
+  lines = [
+    { text: ${JSON.stringify(s.hero)}, size: "clamp(3rem,18vw,14rem)" },
+    { text: ${JSON.stringify(s.sub)},  size: "clamp(1.2rem,5vw,2.6rem)" },
+  ],
+}) {
+  const rootRef = useRef(null);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+${ENGINE}
+    return () => {
+      cancelAnimationFrame(raf);
+      removeEventListener("pointermove", onMove);
+      removeEventListener("pointerleave", onLeave);
+    };
+  }, []);
+
+  // The effect splits each line into per-letter spans, so render empty .vf-line nodes.
+  return (
+    <div
+      ref={rootRef}
+      style={{
+        fontFamily: \`${s.family}, ${s.fallback}\`,
+        color: "#16130F", textAlign: "center",
+        display: "grid", placeContent: "center", gap: ".5em", padding: "8vw",
+      }}
+    >
+      {lines.map((l, i) => (
+        <div
+          key={i}
+          className="vf-line"
+          data-text={l.text}
+          style={{ fontSize: l.size, lineHeight: 0.95, whiteSpace: "nowrap", cursor: "crosshair" }}
+        />
+      ))}
+    </div>
+  );
+}`;
+            }
+
+            const escAttr = str => String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+            /* ---------- export sheet ---------- */
+            const sheetWrap = $('#sheetWrap'), sheetCode = $('#sheetCode');
+            const sheetTitle = $('#sheetTitle'), sheetSub = $('#sheetSub'), sheetNote = $('#sheetNote');
+            let lastFocus = null;
+
+            function openSheet(kind) {
+                const s = snapshot();
+                let title, sub, body;
+                if (kind === 'prompt') {
+                    title = 'Prompt'; sub = 'paste into any AI to recreate this exact style';
+                    body = genPrompt(s);
+                } else {
+                    const isReact = S.tech === 'react';
+                    title = isReact ? 'React component' : 'HTML / CSS / JS';
+                    sub = isReact ? 'drop-in component — add the font link, then <ProximityText />'
+                        : 'save as .html and open — fully self-contained';
+                    body = isReact ? genReact(s) : genHTML(s);
+                }
+                sheetTitle.textContent = title; sheetSub.textContent = sub;
+                sheetNote.textContent = `${body.split('\n').length} lines · ${body.length} chars`;
+                sheetCode.value = body;
+                lastFocus = document.activeElement;
+                sheetWrap.classList.add('open'); sheetWrap.setAttribute('aria-hidden', 'false');
+                requestAnimationFrame(() => { sheetCode.focus(); sheetCode.setSelectionRange(0, 0); });
+            }
+            function closeSheet() {
+                sheetWrap.classList.remove('open'); sheetWrap.setAttribute('aria-hidden', 'true');
+                if (lastFocus) lastFocus.focus();
+            }
+            function flash(btn, txt) {
+                const old = btn.textContent; btn.textContent = txt; btn.classList.add('ok');
+                setTimeout(() => { btn.textContent = old; btn.classList.remove('ok'); }, 1400);
+            }
+            async function copyText(text, btn) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    flash(btn, 'Copied ✓');
+                } catch (_) {
+                    // fallback for sandboxed clipboards
+                    sheetCode.focus(); sheetCode.select();
+                    try { document.execCommand('copy'); flash(btn, 'Copied ✓'); }
+                    catch (__) { flash(btn, 'Select + ⌘C'); }
+                }
+            }
+
+            $('#copyPrompt').onclick = () => openSheet('prompt');
+            $('#copyCode').onclick = () => openSheet('code');
+            $('#sheetClose').onclick = closeSheet;
+            $('#sheetCopy').onclick = e => copyText(sheetCode.value, e.currentTarget);
+            sheetWrap.addEventListener('pointerdown', e => { if (e.target === sheetWrap) closeSheet(); });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape' && sheetWrap.classList.contains('open')) closeSheet(); });
+
+            stageEls.forEach(split);
+            buildPicker();
+            selectFont(FONTS[0].id);   // sets family, axis, sliders, letters
+            requestAnimationFrame(tick);
+        })();
+    </script>
+</body>
+
+</html>

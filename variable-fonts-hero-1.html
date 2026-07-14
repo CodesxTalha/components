@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aitofy Hero Section</title>
+<!-- Google Fonts for Playfair Display & Archivo -->
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Playfair+Display:wght@400..900&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --paper: #F7F5F1;
+    --ink: #16130F;
+    --muted: #55524E;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    width: 100%;
+    overflow-x: hidden;
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  body {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  /* --- HEADER NAVIGATION --- */
+  header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 1.5vw;
+    z-index: 10;
+  }
+
+  .logo {
+    font-weight: 800;
+    font-size: 1.6rem;
+    letter-spacing: -0.03em;
+    cursor: pointer;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+  }
+
+  .nav-links a {
+    text-decoration: none;
+    color: var(--ink);
+    font-weight: 500;
+    font-size: 0.95rem;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+  }
+
+  .nav-links a:hover {
+    opacity: 1;
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1.8rem;
+  }
+
+  .btn-login {
+    text-decoration: none;
+    color: var(--ink);
+    font-weight: 500;
+    font-size: 0.95rem;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+  }
+
+  .btn-login:hover {
+    opacity: 1;
+  }
+
+  .btn-join {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0.7rem 1.4rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: background 0.2s;
+  }
+
+  .btn-join:hover {
+    opacity: 0.9;
+  }
+
+  /* --- HERO SECTION --- */
+  .hero-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin: 0 auto;
+    padding: 2rem 6vw 8vw 6vw;
+    text-align: center;
+    max-width: fit-content;
+  }
+
+  /* Variable Font Line Setup */
+  .vf-line {
+    white-space: nowrap;
+    cursor: crosshair;
+    user-select: none;
+    line-height: 0.9;
+    display: block;
+  }
+
+  .vf-ch {
+    display: inline-block;
+    will-change: font-variation-settings;
+  }
+
+  /* Typography Styles */
+  .playfair-text {
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: clamp(2.2rem, 7vw, 9rem);
+    font-weight: 400;
+    margin-bottom: 0vw; /* Keeps it perfectly stacked with automations text */
+  }
+
+  .archivo-text {
+    font-family: "Archivo", system-ui, sans-serif;
+    font-size: clamp(3rem, 15vw, 17rem);
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+  }
+
+  /* Subtext Grid Alignment (Mathematical layout match) */
+  .subtext-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .subtext-col-right {
+    text-align: left;
+    padding-left: 2rem; /* Soft padding offset from absolute center line */
+  }
+
+  .hero-description {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: clamp(0.85rem, 1.2vw, 2.15rem);
+    line-height: 1.45;
+    color: var(--muted);
+    font-weight: 450;
+    white-space: nowrap;
+    text-align: end;
+  }
+
+  /* --- RESPONSIVE ADJUSTMENTS --- */
+  @media (max-width: 900px) {
+    header .nav-links {
+      display: none; /* Collapses menu links cleanly on mobile devices */
+    }
+  }
+
+  @media (max-width: 768px) {
+    .subtext-row {
+      grid-template-columns: 1fr; /* Stack layout on mobile viewports */
+      margin-top: 2.5rem;
+    }
+    .subtext-col-right {
+      text-align: center;
+      padding-left: 0;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Premium Web Header Navigation -->
+  <header>
+    <div class="logo">Aitofy.</div>
+    <nav class="nav-links">
+      <a href="#">Products</a>
+      <a href="#">Solutions</a>
+      <a href="#">Pricing</a>
+      <a href="#">about</a>
+    </nav>
+    <div class="nav-right">
+      <a href="#" class="btn-login">Login</a>
+      <a href="#" class="btn-join">Join Now</a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main class="hero-container">
+    <h2 class="vf-line playfair-text" data-text="Smarter Workflow">Smarter Workflow</h2>
+    <h1 class="vf-line archivo-text" data-text="AUTOMATIONS">AUTOMATIONS</h1>
+    
+    <div class="subtext-row">
+      <div class="subtext-col-left"></div>
+      <div class="subtext-col-right">
+        <!-- Static double lined structured subtext -->
+        <p class="hero-description">
+          Automations to make your life easier, not complex<br>and here you go Aitofy is here to help you for that
+        </p>
+      </div>
+    </div>
+  </main>
+
+<script>
+// Combined configurations for multiple typography rules
+const CONFIGS = {
+  playfair: {
+    family: "Playfair Display",
+    fallback: "Georgia,serif",
+    axes: ["wght"],
+    driven: "wght",
+    rest: 400, peak: 900,
+    radius: 258, smooth: 0.18,
+    spread: "both",
+    couples: [],
+    statics: {}
+  },
+  archivo: {
+    family: "Archivo",
+    fallback: "system-ui,sans-serif",
+    axes: ["wght","wdth"],
+    driven: "wght",
+    rest: 400, peak: 900,
+    radius: 460, smooth: 0.16,
+    spread: "both",
+    couples: [],
+    statics: {"wdth":67}
+  }
+};
+
+(function(){
+  const root = document;
+  const clamp=(v,a,b)=>v<a?a:v>b?b:v, lerp=(a,b,t)=>a+(b-a)*t;
+  const map=(x,a,b,c,d)=>lerp(c,d,clamp((x-a)/((b-a)||1),0,1));
+  const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  
+  const P={x:-1e5,y:-1e5,on:false};
+  const onMove=e=>{P.x=e.clientX;P.y=e.clientY;P.on=true};
+  const onLeave=()=>{P.on=false;};
+  
+  addEventListener('pointermove',onMove,{passive:true});
+  addEventListener('pointerleave',onLeave);
+
+  const letters=[];
+  
+  root.querySelectorAll('.vf-line').forEach(line=>{
+    const type = line.classList.contains('playfair-text') ? 'playfair' : 'archivo';
+    const cfg = CONFIGS[type];
+    const txt = line.dataset.text ?? line.textContent; 
+    line.textContent='';
+
+    const start=a=>{
+      if(a===cfg.driven) return cfg.rest;
+      const c=cfg.couples.find(c=>c.axis===a);
+      return c ? map(cfg.rest,c.from[0],c.from[1],c.to[0],c.to[1]) : cfg.statics[a];
+    };
+
+    for(const ch of txt){
+      const s=document.createElement('span'); 
+      s.className='vf-ch'; 
+      s.style.display='inline-block';
+      if(ch===' '){ 
+        s.style.width='.28em'; 
+        s.innerHTML='&nbsp;'; 
+      } else {
+        s.textContent=ch;
+      }
+      line.appendChild(s);
+      
+      const vals={}; 
+      cfg.axes.forEach(a=>vals[a]=start(a));
+      letters.push({el:s, vals, cfg});
+    }
+  });
+
+  let raf;
+  function frame(){
+    for(const L of letters){
+      const cfg = L.cfg;
+      const R = cfg.radius;
+      const sm = reduce ? 1 : cfg.smooth;
+      const r = L.el.getBoundingClientRect();
+      const cx = r.left + r.width/2;
+      const cy = r.top + r.height/2;
+      let t = 0;
+      
+      if(P.on){
+        const side = cx - P.x;
+        const ok = cfg.spread==='both' || (cfg.spread==='right'&&side>=0) || (cfg.spread==='left'&&side<=0);
+        if(ok){ 
+          const d=Math.hypot(P.x-cx,P.y-cy); 
+          t=clamp(1-d/R,0,1); 
+          t=t*t*(3-2*t); 
+        }
+      }
+      
+      const dv = lerp(cfg.rest, cfg.peak, t);
+      const tgt = {};
+      tgt[cfg.driven] = dv;
+      cfg.couples.forEach(c=>tgt[c.axis]=map(dv,c.from[0],c.from[1],c.to[0],c.to[1]));
+      for(const a in cfg.statics) tgt[a]=cfg.statics[a];
+      
+      let str='';
+      for(const a of cfg.axes){ 
+        const v = L.vals[a] + (tgt[a]-L.vals[a])*sm; 
+        L.vals[a]=v; 
+        str+=`'${a}' ${v.toFixed(2)},`; 
+      }
+      L.el.style.fontVariationSettings=str.slice(0,-1);
+    }
+    raf=requestAnimationFrame(frame);
+  }
+  raf=requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
